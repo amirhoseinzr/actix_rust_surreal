@@ -5,7 +5,9 @@ use surrealdb::opt::QueryResult;
 use surrealdb::sql::Statement::Use;
 use validator::Validate;
 mod models;
+use crate::db::user_data_trait::{UserDataTrait};
 use crate::db::Database;
+
 mod db;
 use crate::models::user::{AddUserRequest, UpdateUserURL, User };
 use surrealdb::sql::Uuid;
@@ -20,7 +22,8 @@ async fn hello() -> impl Responder {
 #[get("/users")]
 async fn get_users(db: Data<Database>) -> Result<Json<Vec<User>> , UserError>{
 
-    let users = db.get_all_users().await;
+    let users = Database::get_all_users(&db).await;
+
     match users {
         Some(found_users) =>Ok(Json(found_users)),
         None => Err(UserError::NoSuchUser),
@@ -58,8 +61,8 @@ async fn add_user(body: Json<AddUserRequest>, db: Data<Database>) -> Result<Json
             let user_name = body.user_name.clone();
             let mut buffer = uuid::Uuid::encode_buffer();
             let new_uuid = uuid::Uuid::new_v4().simple().encode_lower(&mut buffer);
-            let new_user = db
-                .add_user(User::new(String::from(new_uuid), user_name))
+            let new_user = Database::
+                add_user( &db,User::new(String::from(new_uuid), user_name))
                 .await;
 
             match new_user {
@@ -82,7 +85,7 @@ async fn add_user(body: Json<AddUserRequest>, db: Data<Database>) -> Result<Json
 #[patch("/updateuser/{uuid}")]
 async fn update_user(update_user_url: Path<UpdateUserURL>, db:Data<Database>) -> Result<Json<User>, UserError>  {
     let uuid = update_user_url.into_inner().uuid;
-    let update_result = db.update_user(uuid).await;
+    let update_result = Database::update_user(&db, uuid).await;
 
     match update_result {
         Some(updated_user) => Ok(Json(updated_user)),
