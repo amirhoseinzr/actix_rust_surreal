@@ -1,13 +1,15 @@
 use std::fmt::format;
 use actix_web::{get, patch, post, web::Path, web::Json, App, HttpResponse, HttpServer, Responder};
 use actix_web::web::Data;
+use surrealdb::sql::Statement::Use;
 use validator::Validate;
 mod models;
 use crate::db::Database;
 mod db;
 use crate::models::user::{AddUserRequest, UpdateUserURL, User };
 use surrealdb::sql::Uuid;
-
+use crate::error::user_error::UserError;
+mod error  ;
 
 #[get("/hello")]
 async fn hello() -> impl Responder {
@@ -15,12 +17,12 @@ async fn hello() -> impl Responder {
 }
 
 #[get("/users")]
-async fn get_users(db: Data<Database>) -> impl Responder{
-    let users = db.get_all_users().await;
+async fn get_users(db: Data<Database>) -> Result<Json<Vec<User>> , UserError>{
 
+    let users = db.get_all_users().await;
     match users {
-        Some(found_users) =>return HttpResponse::Ok().body(format!("{:?}", found_users)),
-        None => HttpResponse::Ok().body("Error"),
+        Some(found_users) =>Ok(Json(found_users)),
+        None => Err(UserError::NoSuchUser),
     }
 
     //HttpResponse::Ok().body("Available Users")

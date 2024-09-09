@@ -9,8 +9,8 @@ pub struct AddUserRequest {
     #[validate(length(min = 1, message = "Username is required"))]
     pub user_name: String,
 
-    #[validate(email)]
-    pub email:String,
+    // #[validate(email)]
+    // pub email:String,
 }
 
 #[derive(Validate, Deserialize, Serialize)]
