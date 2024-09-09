@@ -3,6 +3,7 @@ mod database;
 use surrealdb::engine::remote::ws::{Client, Ws};
 use surrealdb::opt::auth::{Namespace, Root};
 use surrealdb::{Error, Surreal};
+use surrealdb::iam::Level::No;
 use crate::models::user::User;
 
 #[derive(Clone)]
@@ -46,6 +47,33 @@ impl Database {
         match created_user {
             Ok(created) => created,
             Err(_) => None
+        }
+    }
+
+    pub(crate)async fn update_user(&self, uuid:String) -> Option<User>{
+        let find_user: Result<Option<User>, Error> = self.client.select(("user", &uuid)).await;
+        
+        match find_user {
+            Ok(found) => {
+                match found {
+                    Some(_found_user) => {
+                          let updated_user: Result<Option<User>, Error> = self
+                              .client
+                              .update(("user", &uuid))
+                              .merge(User {
+                                  uuid,
+                                  user_name: String::from(" updated static")
+                              })
+                              .await;
+                        match updated_user {
+                            Ok(updated) => updated,
+                            Err(_) => None,
+                        }
+                    },
+                    None => None,
+                }
+            }
+            Err (_) => None,
         }
     }
 

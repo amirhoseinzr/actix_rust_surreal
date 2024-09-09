@@ -1,6 +1,7 @@
 use std::fmt::format;
 use actix_web::{get, patch, post, web::Path, web::Json, App, HttpResponse, HttpServer, Responder};
 use actix_web::web::Data;
+use surrealdb::opt::QueryResult;
 use surrealdb::sql::Statement::Use;
 use validator::Validate;
 mod models;
@@ -50,7 +51,7 @@ async fn get_users(db: Data<Database>) -> Result<Json<Vec<User>> , UserError>{
 // }
 
 #[post("/adduser")]
-async fn add_user(body: Json<AddUserRequest>, db: Data<Database>) -> impl Responder {
+async fn add_user(body: Json<AddUserRequest>, db: Data<Database>) -> Result<Json<User>, UserError> {
     let is_valid = body.validate();
     match is_valid {
         Ok(_) => {
@@ -64,24 +65,31 @@ async fn add_user(body: Json<AddUserRequest>, db: Data<Database>) -> impl Respon
             match new_user {
                 Some(created) => {
                     // Return the response, no semicolon here
-                    return HttpResponse::Ok().body(format!("created new usr: {:?}", created));
+                    Ok(Json(created))
                 },
                 None => {
-                    return HttpResponse::Ok().body("Error to add user");
+                    Err(UserError::UsercreationFailed)
                 }
             }
         }
         Err(_) => {
-            return HttpResponse::Ok().body("user_name is required!");
+            Err(UserError::UsercreationFailed)
         }
     }
 }
 
 
 #[patch("/updateuser/{uuid}")]
-async fn update_user(update_user_url: Path<UpdateUserURL>) -> impl Responder{
+async fn update_user(update_user_url: Path<UpdateUserURL>, db:Data<Database>) -> Result<Json<User>, UserError>  {
     let uuid = update_user_url.into_inner().uuid;
-    HttpResponse::Ok().body(format!("updating user with {uuid}"))
+    let update_result = db.update_user(uuid).await;
+
+    match update_result {
+        Some(updated_user) => Ok(Json(updated_user)),
+        None => Err(UserError::NoSuchUser),
+
+    }
+
 }
 
 #[actix_web::main]
