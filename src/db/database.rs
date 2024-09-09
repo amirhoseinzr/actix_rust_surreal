@@ -15,13 +15,13 @@ pub struct Database{
 impl Database {
     pub async fn init() -> Result<Self,Error> {
 
-        let Client = Surreal::new::<Ws>("127.0.0.1:8000").await?;
-        Client.signin(Root {
+        let client = Surreal::new::<Ws>("127.0.0.1:8000").await?;
+        client.signin(Root {
             username: "root",
             password: "root",
         })
             .await?;
-        client.use_ns("surreal").use_db("user").await.unwrap();
+        client.use_ns("surreal").use_db("users").await.unwrap();
         Ok(Database{
             client,
             name_space: String::from("surreal"),
@@ -30,18 +30,23 @@ impl Database {
     }
 
     pub async fn get_all_users(&self) -> Option<Vec<User>> {
-        let result = self.client.select("user").await;
+        let result = self.client.select("user").await;  //here self refers to database
         match result {
             Ok(all_users) => Some(all_users),
             Err(_) => None,
         }
     }
-    pub async fn add_pizza(&self, new_user: User) -> Option<User>{
-        let create_user = self
+    pub async fn add_user(&self, new_user: User) -> Option<User>{
+        let created_user = self
             .client
             .create(("user", new_user.uuid.clone()))
             .content(new_user)
             .await;
+
+        match created_user {
+            Ok(created) => created,
+            Err(_) => None
+        }
     }
 
 }

@@ -18,7 +18,7 @@ pub struct UpdateUserURL {
     pub uuid: String,
 }
 
-#[derive(Serialize,Deserialize, Validate)]
+#[derive(Serialize,Deserialize, Validate, Debug)]
 pub struct User{
     pub uuid: String,
     pub user_name: String
