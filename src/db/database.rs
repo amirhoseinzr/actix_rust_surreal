@@ -1,11 +1,8 @@
 mod database;
 
 use surrealdb::engine::remote::ws::{Client, Ws};
-use surrealdb::opt::auth::{Namespace, Root};
+use surrealdb::opt::auth::Root;
 use surrealdb::{Error, Surreal};
-use surrealdb::iam::Level::No;
-use crate::models::user::User;
-
 #[derive(Clone)]
 pub struct Database{
     pub client: Surreal<Client>,
@@ -14,8 +11,7 @@ pub struct Database{
 }
 
 impl Database {
-    pub async fn init() -> Result<Self,Error> {
-
+    pub async fn init() -> Result<Self, Error> {
         let client = Surreal::new::<Ws>("127.0.0.1:8000").await?;
         client.signin(Root {
             username: "root",
@@ -23,13 +19,14 @@ impl Database {
         })
             .await?;
         client.use_ns("surreal").use_db("users").await.unwrap();
-        Ok(Database{
+        Ok(Database {
             client,
             name_space: String::from("surreal"),
             db_name: String::from("users")
         })
     }
-    //
+}
+//
     // pub async fn get_all_users(&self) -> Option<Vec<User>> {
     //     let result = self.client.select("user").await;  //here self refers to database
     //     match result {
@@ -77,4 +74,3 @@ impl Database {
     //     }
     // }
 
-}

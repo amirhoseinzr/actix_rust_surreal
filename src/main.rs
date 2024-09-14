@@ -1,19 +1,19 @@
-use std::fmt::format;
+
 use actix_web::{get, patch, post, web::Path, web::Json, App, HttpResponse, HttpServer, Responder};
 use actix_web::web::Data;
 use surrealdb::opt::QueryResult;
-use surrealdb::sql::Statement::Use;
 use validator::Validate;
 mod models;
 use crate::db::user_data_trait::{UserDataTrait};
 use crate::db::Database;
-
 mod db;
 use crate::models::user::{AddUserRequest, UpdateUserURL, User };
-use surrealdb::sql::Uuid;
+//use crate::models::transaction;
 use crate::error::user_error::UserError;
 mod error  ;
 
+
+//User Model-----------------------------------------------------------------------------------------------------
 #[get("/hello")]
 async fn hello() -> impl Responder {
     HttpResponse::Ok().body("Hello")
@@ -59,10 +59,11 @@ async fn add_user(body: Json<AddUserRequest>, db: Data<Database>) -> Result<Json
     match is_valid {
         Ok(_) => {
             let user_name = body.user_name.clone();
+            let mut wallet_address = body.wallet_address.clone();
             let mut buffer = uuid::Uuid::encode_buffer();
             let new_uuid = uuid::Uuid::new_v4().simple().encode_lower(&mut buffer);
             let new_user = Database::
-                add_user( &db,User::new(String::from(new_uuid), user_name))
+                add_user( &db,User::new(String::from(new_uuid), user_name, wallet_address))
                 .await;
 
             match new_user {
@@ -94,6 +95,16 @@ async fn update_user(update_user_url: Path<UpdateUserURL>, db:Data<Database>) ->
     }
 
 }
+//User Model-----------------------------------------------------------------------------------------------------
+
+
+
+
+//Transaction Model-----------------------------------------------------------------------------------------------------
+
+
+
+//Transaction Model-----------------------------------------------------------------------------------------------------
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

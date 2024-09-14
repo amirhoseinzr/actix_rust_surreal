@@ -1,10 +1,9 @@
-
 use crate::models::{User};
 use crate::{db::Database};
 use actix_web::web::Data;
 use async_trait::async_trait;
 use surrealdb::{Error};
-use surrealdb::key::root::us::Us;
+
 
 #[async_trait]
  pub trait UserDataTrait {
@@ -52,7 +51,8 @@ impl UserDataTrait for Database {
                             .update(("user", &uuid))
                             .merge(User {
                                 uuid,
-                                user_name: String::from(" Deleted")
+                                user_name: String::from(" Deleted"),
+                                wallet_address: String::from("deleted")
                             })
                             .await;
                         match updated_user {
